@@ -3,6 +3,8 @@ function init() {
 	var scene = new THREE.Scene();
 	var gui = new dat.GUI();
 	var clock = new THREE.Clock();
+	var stats = new Stats();
+	document.body.appendChild(stats.dom);
 
 	// add geometry
 	var plane = getPlane(50);
@@ -47,11 +49,24 @@ function init() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.setClearColor('rgb(220, 220, 220)');
 	document.getElementById('webgl').appendChild(renderer.domElement);
+
+	var composer = new THREE.EffectComposer(renderer);
+	var renderPass = new THREE.RenderPass(scene, camera);
+	composer.addPass(renderPass);
+
+	var vignetteEffect = new THREE.ShaderPass(THREE.VignetteShader);
+	vignetteEffect.uniforms['darkness'].value = 2;
+	composer.addPass(vignetteEffect);
+
+	var rgbShiftShader = new THREE.ShaderPass(THREE.RGBShiftShader);
+	rgbShiftShader.uniforms['amount'].value = 0.003;
+	rgbShiftShader.renderToScreen = true;
+	composer.addPass(rgbShiftShader);
 	
 	// controls
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-	update(renderer, scene, camera, controls, clock);
+	update(composer, scene, camera, controls, clock, stats);
 
 	return scene;
 }
@@ -119,9 +134,10 @@ function getPlane(size) {
 	return obj;
 }
 
-function update(renderer, scene, camera, controls, clock) {
+function update(renderer, scene, camera, controls, clock, stats) {
 	renderer.render(scene, camera);
 	controls.update();
+	stats.update();
 	var timeElapsed = clock.getElapsedTime();
 
 	var boxGrid = scene.getObjectByName('boxGrid-1');
@@ -132,7 +148,7 @@ function update(renderer, scene, camera, controls, clock) {
 	});
 	
 	requestAnimationFrame(function() {
-		update(renderer, scene, camera, controls, clock);
+		update(renderer, scene, camera, controls, clock, stats);
 	});
 }
 

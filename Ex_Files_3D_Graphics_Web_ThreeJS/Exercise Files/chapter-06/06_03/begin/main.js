@@ -55,9 +55,9 @@ function init() {
 	var loader = new THREE.OBJLoader();
 	var textureLoader = new THREE.TextureLoader();
 
-	loader.load('/assets/models/head/lee-perry-smith-head-scan.obj', function (object) {
-		var colorMap = textureLoader.load('/assets/models/head/Face_Color.jpg');
-		var bumpMap = textureLoader.load('/assets/models/head/Face_Disp.jpg');
+	loader.load('../../../assets/models/head/lee-perry-smith-head-scan.obj', function (object) {
+		var colorMap = textureLoader.load('../../../assets/models/head/Face_Color.jpg');
+		var bumpMap = textureLoader.load('../../../assets/models/head/Face_Disp.jpg');
 		var faceMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
 
 		object.traverse(function(child) {

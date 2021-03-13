@@ -3,18 +3,18 @@ function init() {
 	var gui = new dat.GUI();
 
 	// initialize objects
-	var sphereMaterial = getMaterial('basic', 'rgb(255, 0, 0)');
+	var sphereMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
 	var sphere = getSphere(sphereMaterial, 1, 24);
 
-	var planeMaterial = getMaterial('basic', 'rgb(0, 0, 255)');
-	var plane = getPlane(planeMaterial, 30);
+	var planeMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
+	var plane = getPlane(planeMaterial, 300);
 
 	var lightLeft = getSpotLight(1, 'rgb(255, 220, 180)');
 	var lightRight = getSpotLight(1, 'rgb(255, 220, 180)');
 
 	// manipulate objects
 	sphere.position.y = sphere.geometry.parameters.radius;
-	plane.rotation.x = Math.PI/2;
+	plane.rotation.x = Math.PI / 2;
 
 	lightLeft.position.x = -5;
 	lightLeft.position.y = 2;
@@ -25,6 +25,38 @@ function init() {
 	lightRight.position.z = -4;
 
 	// manipulate materials
+	var path = '../../../assets/cubemap/';
+	var format = '.jpg';
+	var urls = [
+		path + 'px' + format, path + 'nx' + format,
+		path + 'py' + format, path + 'ny' + format,
+		path + 'pz' + format, path + 'nz' + format
+	];
+
+	var reflectionCube = new THREE.CubeTextureLoader().load(urls);
+	reflectionCube.format = THREE.RGBFormat;
+
+	scene.background = reflectionCube;
+
+	var loader = new THREE.TextureLoader();
+	planeMaterial.map = loader.load('../../../assets/textures/concrete.jpg');
+	planeMaterial.bumpMap = loader.load('../../../assets/textures/concrete.jpg');
+	planeMaterial.roughnessMap = loader.load('../../../assets/textures/concrete.jpg');
+	planeMaterial.bumpScale = 0.01;
+	planeMaterial.metalness = 0.1;
+	planeMaterial.roughness = 0.7;
+	planeMaterial.envMap = reflectionCube;
+
+	sphereMaterial.roughnessMap = loader.load('../../../assets/textures/fingerprints.jpg');
+	sphereMaterial.envMap = reflectionCube;
+
+	var maps = ['map', 'bumpMap', 'roughnessMap'];
+	maps.forEach(function (mapName) {
+		var texture = planeMaterial[mapName];
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(15, 15);
+	});
 
 	// dat.gui
 	var folder1 = gui.addFolder('light_1');
@@ -38,6 +70,12 @@ function init() {
 	folder2.add(lightRight.position, 'x', -5, 15);
 	folder2.add(lightRight.position, 'y', -5, 15);
 	folder2.add(lightRight.position, 'z', -5, 15);
+
+	var folder3 = gui.addFolder('materials');
+	folder3.add(sphereMaterial, 'roughness', 0, 1);
+	folder3.add(planeMaterial, 'roughness', 0, 1);
+	folder3.add(sphereMaterial, 'metalness', 0, 1);
+	folder3.add(planeMaterial, 'metalness', 0, 1);
 
 	// add objects to the scene
 	scene.add(sphere);
@@ -62,9 +100,9 @@ function init() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.shadowMap.enabled = true;
 	document.getElementById('webgl').appendChild(renderer.domElement);
-	
-	var controls = new THREE.OrbitControls( camera, renderer.domElement );
-	
+
+	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
 	update(renderer, scene, camera, controls);
 
 	return scene;
@@ -97,7 +135,7 @@ function getMaterial(type, color) {
 		case 'standard':
 			selectedMaterial = new THREE.MeshStandardMaterial(materialOptions);
 			break;
-		default: 
+		default:
 			selectedMaterial = new THREE.MeshBasicMaterial(materialOptions);
 			break;
 	}
@@ -112,8 +150,8 @@ function getSpotLight(intensity, color) {
 	light.penumbra = 0.5;
 
 	//Set up shadow properties for the light
-	light.shadow.mapSize.width = 1024;  // default: 512
-	light.shadow.mapSize.height = 1024; // default: 512
+	light.shadow.mapSize.width = 2048;  // default: 512
+	light.shadow.mapSize.height = 2048; // default: 512
 	light.shadow.bias = 0.001;
 
 	return light;
@@ -131,9 +169,10 @@ function getPlane(material, size) {
 function update(renderer, scene, camera, controls) {
 	controls.update();
 	renderer.render(scene, camera);
-	requestAnimationFrame(function() {
+	requestAnimationFrame(function () {
 		update(renderer, scene, camera, controls);
 	});
 }
 
 var scene = init();
+
